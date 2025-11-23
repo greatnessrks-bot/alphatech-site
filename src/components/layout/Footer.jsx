@@ -10,18 +10,18 @@ import {
 import {
   GitHub,
   LinkedIn,
-  Twitter,
+  X,
   Email,
   Instagram,
 } from '@mui/icons-material';
 
 const Footer = () => {
   const socialLinks = [
-    { name: 'GitHub', icon: GitHub, url: 'https://github.com/yourusername' },
-    { name: 'LinkedIn', icon: LinkedIn, url: 'https://linkedin.com/in/yourprofile' },
-    { name: 'Twitter', icon: Twitter, url: 'https://twitter.com/yourhandle' },
-    { name: 'Instagram', icon: Instagram, url: 'https://instagram.com/yourhandle' },
-    { name: 'Email', icon: Email, url: 'mailto:your@email.com' },
+    { name: 'GitHub', icon: GitHub, url: 'https://github.com/greatnessrks-bot' },
+    { name: 'LinkedIn', icon: LinkedIn, url: 'https://linkedin.com/in/greatnessrks@gmail.com' },
+    { name: 'X', icon: X, url: 'https://x.com/GreatNez245476' },
+    { name: 'Instagram', icon: Instagram, url: 'https://instagram.com/great_nez08' },
+    { name: 'Email', icon: Email, url: 'mailto:greatnessrks@gmail.com' },
   ];
 
   const footerLinks = {
