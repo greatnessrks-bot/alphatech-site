@@ -29,6 +29,8 @@ import StarIcon from '@mui/icons-material/Star';
 
 import { detailedCourses } from '../data/courses';
 import { useAuth } from '../context/AuthContext';
+import { useCourseNavigation } from '../context/CourseNavigationContext';
+import { useCourseProgress } from '../context/CourseProgressContext';
 
 const getLevelColor = (level) => {
   switch (level) {
@@ -42,7 +44,20 @@ const getLevelColor = (level) => {
 function CourseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+  
+  // ⭐ NEW: Course navigation tracking
+  const { updateLastCoursePath, resetToCoursesHome } = useCourseNavigation();
+  
+  // ⭐ NEW: Course progress tracking
+  const { 
+    startCourse, 
+    markLessonComplete, 
+    updateCurrentLesson, 
+    saveNotes: saveNotesToProgress,
+    getCourseProgress 
+  } = useCourseProgress();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedModules, setExpandedModules] = useState({ 1: true });
@@ -52,6 +67,7 @@ function CourseDetail() {
   const [showResources, setShowResources] = useState(false);
   const [notes, setNotes] = useState({});
   const [currentNote, setCurrentNote] = useState('');
+  const [progressLoaded, setProgressLoaded] = useState(false);
 
   // Find the course
   const course = detailedCourses.find((c) => String(c.id) === String(id));
@@ -61,6 +77,46 @@ function CourseDetail() {
     const key = `${currentLesson.moduleId}-${currentLesson.lessonId}`;
     setCurrentNote(notes[key] || '');
   }, [currentLesson, notes]);
+  
+  // ⭐ NEW: Track current path when component mounts (only if logged in)
+  useEffect(() => {
+    if (user) {
+      updateLastCoursePath(location.pathname);
+    }
+  }, [location.pathname, updateLastCoursePath, user]);
+
+  // ⭐ NEW: Load saved progress when course loads
+  useEffect(() => {
+    if (user && course && !progressLoaded) {
+      const savedProgress = getCourseProgress(course.id);
+      
+      if (savedProgress) {
+        // Restore previous progress
+        setCurrentLesson(savedProgress.currentLesson || { moduleId: 1, lessonId: 0 });
+        setCompletedLessons(savedProgress.completedLessons || {});
+        setNotes(savedProgress.notes || {});
+        
+        // Expand the current module
+        setExpandedModules(prev => ({
+          ...prev,
+          [savedProgress.currentLesson?.moduleId || 1]: true
+        }));
+      } else {
+        // First time visiting this course - register it
+        startCourse(course.id, {
+          title: course.title,
+          categoryId: course.categoryId,
+          instructor: course.instructor,
+          level: course.level,
+          duration: course.duration,
+          rating: course.rating,
+          totalLessons: 12, // 3 modules x 4 lessons
+        });
+      }
+      
+      setProgressLoaded(true);
+    }
+  }, [user, course, progressLoaded, getCourseProgress, startCourse]);
 
   if (!course) {
     return (
@@ -164,11 +220,20 @@ function CourseDetail() {
 
   const selectLesson = (moduleId, lessonId) => {
     setCurrentLesson({ moduleId, lessonId });
+    // ⭐ Save lesson position to progress
+    if (user && course) {
+      updateCurrentLesson(course.id, moduleId, lessonId);
+    }
   };
 
   const markComplete = () => {
     const key = `${currentLesson.moduleId}-${currentLesson.lessonId}`;
     setCompletedLessons(prev => ({ ...prev, [key]: true }));
+    
+    // ⭐ Save completion to progress context
+    if (user && course) {
+      markLessonComplete(course.id, currentLesson.moduleId, currentLesson.lessonId);
+    }
   };
 
   const isCompleted = (moduleId, lessonId) => {
@@ -183,9 +248,14 @@ function CourseDetail() {
   const handleNoteChange = (e) => {
     const newNote = e.target.value;
     setCurrentNote(newNote);
-    // Auto-save
+    // Auto-save to local state
     const key = `${currentLesson.moduleId}-${currentLesson.lessonId}`;
     setNotes(prev => ({ ...prev, [key]: newNote }));
+    
+    // ⭐ Save to progress context
+    if (user && course) {
+      saveNotesToProgress(course.id, currentLesson.moduleId, currentLesson.lessonId, newNote);
+    }
   };
 
   const getCurrentLessonData = () => {
@@ -229,6 +299,12 @@ function CourseDetail() {
   const hasPrevLesson = () => {
     if (currentLesson.lessonId > 0) return true;
     return modules.some(m => m.id === currentLesson.moduleId - 1);
+  };
+  
+  // ⭐ NEW: Handle exit course - resets to category page
+  const handleExitCourse = () => {
+    resetToCoursesHome();
+    navigate(`/category/${course.categoryId}`);
   };
 
   const calculateProgress = () => {
@@ -489,7 +565,7 @@ function CourseDetail() {
 
           <Button
             startIcon={<ArrowBackIcon />}
-            onClick={() => navigate(`/category/${course.categoryId}`)}
+            onClick={handleExitCourse}
             size="small"
             sx={{ textTransform: 'none', fontWeight: 600 }}
           >
@@ -556,33 +632,33 @@ function CourseDetail() {
                   {lessonData?.title}
                 </Typography>
 
-                {/* Hero Video/Image Placeholder */}
+                {/* Hero Video Embed - Real YouTube Video */}
                 <Box
                   sx={{
-                    height: 400,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    position: 'relative',
+                    paddingBottom: '56.25%', // 16:9 Aspect Ratio
+                    height: 0,
+                    overflow: 'hidden',
                     borderRadius: 2,
                     mb: 4,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    overflow: 'hidden',
+                    boxShadow: 3,
                   }}
                 >
-                  <Box
-                    sx={{
+                  <iframe
+                    style={{
                       position: 'absolute',
-                      inset: 0,
-                      bgcolor: 'rgba(0,0,0,0.3)',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                      borderRadius: '8px',
                     }}
+                    src="https://www.youtube.com/embed/rfscVS0vtbw?si=6LbF8T9vBq0hXKQd"
+                    title="Learn Python - Full Course for Beginners"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
                   />
-                  <PlayCircleOutlineIcon sx={{ fontSize: 80, color: 'white', opacity: 0.8, zIndex: 1 }} />
-                  <Box sx={{ position: 'absolute', bottom: 32, left: 32, zIndex: 1 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600, color: 'white' }}>
-                      Scroll to begin ⬇
-                    </Typography>
-                  </Box>
                 </Box>
 
                 {/* Current Lesson Title */}

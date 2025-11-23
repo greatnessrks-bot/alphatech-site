@@ -21,15 +21,18 @@ import ProtectedRoute from './components/layout/ProtectedRoute.jsx';
 
 // ⭐ NEW: Import course navigation provider
 import { CourseNavigationProvider } from './context/CourseNavigationContext.jsx';
+// ⭐ NEW: Import course progress provider
+import { CourseProgressProvider } from './context/CourseProgressContext.jsx';
 
 function App() {
   return (
-    // ⭐ NEW: Wrap entire app with CourseNavigationProvider
+    // ⭐ NEW: Wrap with both providers
     <CourseNavigationProvider>
-      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <Navbar />
-        <Box component="main" sx={{ flexGrow: 1, mt: 8 }}>
-          <Routes>
+      <CourseProgressProvider>
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+          <Navbar />
+          <Box component="main" sx={{ flexGrow: 1, mt: 8 }}>
+            <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<LoginModal />} />
@@ -53,6 +56,7 @@ function App() {
         </Box>
         <Footer />
       </Box>
+      </CourseProgressProvider>
     </CourseNavigationProvider>
   );
 }

@@ -43,9 +43,9 @@ const Footer = () => {
       }}
     >
       <Container maxWidth="xl">
-        <Grid container spacing={4}>
+        <Grid container spacing={6} justifyContent="space-between">
           {/* Brand Section */}
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={3}>
             <Typography
               variant="h6"
               sx={{
@@ -57,7 +57,7 @@ const Footer = () => {
                 backgroundClip: 'text',
               }}
             >
-              TechLearn
+              AlphaTech
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 300 }}>
               Master technology skills with curated video tutorials, hands-on projects, 
@@ -91,7 +91,7 @@ const Footer = () => {
 
           {/* Links Sections */}
           {Object.entries(footerLinks).map(([title, links]) => (
-            <Grid item xs={6} sm={4} md={2.66} key={title}>
+            <Grid item xs={12} sm={4} md={3} key={title}>
               <Typography
                 variant="subtitle2"
                 sx={{ fontWeight: 700, mb: 2, color: 'text.primary' }}
@@ -134,10 +134,10 @@ const Footer = () => {
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            © {new Date().getFullYear()} TechLearn. All rights reserved.
+            © {new Date().getFullYear()} AlphaTech. All rights reserved.
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Built with ❤️ using React & MUI
+            Built with Vite & MUI
           </Typography>
         </Box>
       </Container>
